@@ -4,6 +4,8 @@ import Spinner from "../../ui/Spinner";
 import CabinRow from "./CabinRow";
 import useCabins from "./useCabins";
 import Menus from "../../ui/Menus";
+import { useSearchParams } from "react-router-dom";
+import Empty from "../../ui/Empty";
 
 const Table = styled.div`
   border: 1px solid var(--color-grey-200);
@@ -31,6 +33,43 @@ const TableHeader = styled.header`
 
 function CabinTable() {
   const { isLoading, cabins } = useCabins();
+  const [searchParams] = useSearchParams();
+  if (isLoading) return <Spinner />;
+  if (!cabins.length) return <Empty resourceName="cabins" />;
+  // Filtering
+  const filterValue = searchParams.get("discount") || "all";
+
+  let filteredCabins;
+  if (filterValue === "all") filteredCabins = cabins;
+  if (filterValue === "no-discount")
+    filteredCabins = cabins.filter((cabin) => cabin.discount === 0);
+  if (filterValue === "with-discount")
+    filteredCabins = cabins.filter((cabin) => cabin.discount > 0);
+
+  // Sorting
+  const sortValue = searchParams.get("sortBy");
+  // if (sortValue === "name-asc")
+  //   filteredCabins = cabins.sort((a, b) => a.name.localeComapre(b.name));
+  // if (sortValue === "name-desc")
+  //   filteredCabins = cabins.sort((a, b) => b.name.localeComapre(a.name));
+  if (sortValue === "regularPrice-asc")
+    filteredCabins = cabins.sort((a, b) => a.regularPrice - b.regularPrice);
+  if (sortValue === "regularPrice-desc")
+    filteredCabins = cabins.sort((a, b) => b.regularPrice - a.regularPrice);
+  if (sortValue === "maxCapacity-asc")
+    filteredCabins = cabins.sort((a, b) => a.maxCapacity - b.maxCapacity);
+  if (sortValue === "maxCapacity-desc")
+    filteredCabins = cabins.sort((a, b) => b.maxCapacity - a.maxCapacity);
+
+  // other way of sorting
+  // const sortBy = searchParams.get("sortBy");
+  // const [field, direction] = sortBy.split("-");
+  // const modifier = direction === "asc" ? 1 : -1;
+  // const sortedCabins = filteredCabins.sort(
+  //   (a, b) => (a[field] - b[field]) * modifier
+  // );
+  // but at the bottom we should map over this sortedCabins, not the filtered ones
+
   if (isLoading) return <Spinner />;
   return (
     <Menus>
@@ -43,7 +82,7 @@ function CabinTable() {
           <div>Discount</div>
           <div></div>
         </TableHeader>
-        {cabins.map((cabin) => (
+        {filteredCabins.map((cabin) => (
           <CabinRow cabin={cabin} key={cabin.id} />
         ))}
       </Table>
